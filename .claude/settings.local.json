@@ -4,7 +4,10 @@
       "Bash(git --version)",
       "Bash(gh --version)",
       "Bash(gh auth *)",
-      "Bash(brew --version)"
+      "Bash(brew --version)",
+      "mcp__b812b266-e86b-4fee-be4e-139a055c3cce__notion-search",
+      "mcp__b812b266-e86b-4fee-be4e-139a055c3cce__notion-fetch",
+      "mcp__b812b266-e86b-4fee-be4e-139a055c3cce__notion-create-database"
     ]
   }
 }
