@@ -7,6 +7,7 @@
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: Tahoma, Arial, sans-serif; font-size: 13px; background: #edf2f7; min-height: 100vh; padding: 16px; }
@@ -147,10 +148,28 @@
     .vdiv { width: 1px; background: rgba(255,255,255,0.25); align-self: stretch; margin: 0 2px; }
     .vdiv-dark { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 4px; }
 
+    /* Import modal */
+    .import-summary { background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: #4a5568; }
+    .import-summary strong { color: #2d3748; }
+    .col-map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .col-map-item { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .col-map-item label { min-width: 90px; color: #718096; font-weight: bold; }
+    .col-map-select { border: 1px solid #e2e8f0; border-radius: 4px; padding: 4px 6px; font-family: Tahoma, Arial, sans-serif; font-size: 12px; flex: 1; }
+    .import-preview { border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; }
+    .import-sec-header { background: #4a5568; color: #fff; padding: 5px 10px; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+    .import-sec-header:hover { background: #2d3748; }
+    .import-row { display: grid; font-size: 11px; padding: 3px 10px; border-bottom: 1px solid #f0f0f0; color: #4a5568; }
+    .import-row:last-child { border-bottom: none; }
+    .import-row:nth-child(even) { background: #fafafa; }
+    .import-no-data { text-align: center; padding: 24px; color: #a0aec0; font-size: 12px; }
+    .section-toggle { font-size: 10px; }
+    .col-header-row { background: #edf2f7 !important; font-weight: bold; color: #2d3748 !important; }
+
     @media (max-width: 700px) {
       .fields-grid { grid-template-columns: 1fr 1fr; }
       body { padding: 8px; }
       .brand-title { display: none; }
+      .col-map-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -193,6 +212,13 @@ function App() {
   const [toast, setToast] = useState(null);
   const [promptText, setPromptText] = useState("");
   const [copied, setCopied] = useState(false);
+
+  // Excel import
+  const [showImport, setShowImport] = useState(false);
+  const [importData, setImportData] = useState(null);
+  const [importCols, setImportCols] = useState({ cantidad:0, unidad:1, descripcion:2, precio:3, descuento:4 });
+  const [openSecs, setOpenSecs] = useState({});
+  const fileInputRef = useRef(null);
 
   const showToast = (msg, type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),2600); };
 
@@ -324,6 +350,101 @@ function App() {
       showToast("Sesión eliminada");
     } catch { showToast("Error al eliminar","error"); }
   };
+
+  // ── Excel Import ─────────────────────────────────────────
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(new Uint8Array(evt.target.result), { type:'array' });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+        const filtered = rows.filter(r => r.some(c => c !== '' && c !== null && c !== undefined));
+
+        // Auto-detect column count
+        const maxCols = Math.max(...filtered.map(r => r.length));
+
+        // Auto-detect column mapping from header row
+        const autoMap = { cantidad:0, unidad:1, descripcion:2, precio:3, descuento:4 };
+        const firstRow = filtered[0] || [];
+        firstRow.forEach((cell, i) => {
+          const v = String(cell).toLowerCase().trim();
+          if (/^(cant|cantidad|qty|q)/.test(v)) autoMap.cantidad = i;
+          else if (/^(unidad|um|unit|u\.m)/.test(v)) autoMap.unidad = i;
+          else if (/^(desc|detalle|item|producto|servicio)/.test(v)) autoMap.descripcion = i;
+          else if (/^(precio|p\.?\s*unit|costo\s*list|p\s*lista)/.test(v)) autoMap.precio = i;
+          else if (/^(%|desc\.?%|dcto|descuento)/.test(v)) autoMap.descuento = i;
+        });
+        setImportCols(autoMap);
+
+        // Auto-detect sections
+        const sections = [];
+        let curSec = null;
+        filtered.forEach((row, ri) => {
+          const nonEmpty = row.filter(c => c !== '' && c !== null);
+          if (!nonEmpty.length) return;
+          const first = String(nonEmpty[0]).trim();
+          const hasNum = row.some(c => typeof c === 'number' && c > 0);
+          const isSub = /sub.?total|total\s+gen/i.test(first);
+          const isColHeader = ri === 0 && /cant|desc|precio|unidad/i.test(first);
+          if (isSub || isColHeader) return;
+          const isHeader = (
+            (nonEmpty.length <= 3 && !hasNum) ||
+            /^[A-Za-z]\.\s+\S/.test(first)
+          );
+          if (isHeader) {
+            const name = first.replace(/^[A-Za-z]\.\s*/, '').trim();
+            if (name.length > 1) { curSec = { nombre:name, rows:[] }; sections.push(curSec); }
+          } else {
+            if (!curSec) { curSec = { nombre:'Ítems importados', rows:[] }; sections.push(curSec); }
+            curSec.rows.push(row);
+          }
+        });
+
+        const initOpen = {};
+        sections.forEach((s,i) => { initOpen[i] = true; });
+        setOpenSecs(initOpen);
+        setImportData({ sections, maxCols, fileName: file.name, sheetName: wb.SheetNames[0] });
+        setShowImport(true);
+      } catch(err) {
+        showToast("No se pudo leer el archivo Excel", "error");
+      }
+    };
+    reader.readAsArrayBuffer(file);
+    e.target.value = '';
+  };
+
+  const confirmImport = () => {
+    if (!importData) return;
+    const { cantidad:cC, unidad:uC, descripcion:dC, precio:pC, descuento:dcC } = importCols;
+    const newSections = importData.sections.map(sec => ({
+      id: newId(), nombre: sec.nombre, moneda: 'Q',
+      filas: sec.rows.map(row => ({
+        id: newId(),
+        cantidad: String(row[cC] ?? ''),
+        unidad:   String(row[uC] ?? ''),
+        descripcion: String(row[dC] ?? ''),
+        precio:   String(row[pC] ?? ''),
+        descuento: String(row[dcC] ?? '0'),
+      })).filter(f => f.descripcion || f.precio)
+    })).filter(s => s.filas.length > 0);
+    if (!newSections.length) { showToast("No se detectaron filas con datos","error"); return; }
+    setSections(newSections);
+    setCurrentSessionId(null); setIsDirty(true);
+    setShowImport(false);
+    showToast(`✓ ${newSections.length} secciones importadas — revisa y ajusta`);
+  };
+
+  const colLabel = (i) => i < 0 ? '—' : String.fromCharCode(65+i);
+  const COLS_FIELDS = [
+    { key:'cantidad',    label:'Cantidad' },
+    { key:'unidad',      label:'Unidad' },
+    { key:'descripcion', label:'Descripción' },
+    { key:'precio',      label:'Precio Unit.' },
+    { key:'descuento',   label:'% Descuento' },
+  ];
 
   // ── Prompt ───────────────────────────────────────────────
   const generatePrompt = () => {
@@ -497,6 +618,8 @@ function App() {
           <div className="actions-bar">
             <button className="btn-primary" onClick={addSection}>+ Sección</button>
             <button className="btn-ghost" onClick={newCotizacion}>🆕 Nueva</button>
+            <button className="btn-ghost" onClick={()=>fileInputRef.current?.click()}>📤 Importar Excel</button>
+            <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" style={{display:'none'}} onChange={handleFileSelect}/>
             <span className="vdiv-dark"></span>
             <button className="btn-accent" onClick={()=>saveSession("Borrador")} disabled={isSaving}>
               {isSaving?<><span className="spinner"></span>Guardando…</>:"💾 Guardar"}
@@ -565,6 +688,86 @@ function App() {
               </button>
               <button className="btn-ghost" onClick={()=>setShowConfig(false)}>Cancelar</button>
               <button className="btn-primary" onClick={saveConfig} disabled={!configUrl}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Import Excel Modal */}
+      {showImport && importData && (
+        <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setShowImport(false)}}>
+          <div className="modal" style={{maxWidth:720}}>
+            <div className="modal-header">
+              <span className="modal-title">📤 Importar desde Excel</span>
+              <button className="btn-icon" onClick={()=>setShowImport(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {/* Summary */}
+              <div className="import-summary">
+                📄 <strong>{importData.fileName}</strong> — Hoja: <strong>{importData.sheetName}</strong>
+                &nbsp;·&nbsp; Detectadas: <strong>{importData.sections.length} secciones</strong>
+                &nbsp;·&nbsp; <strong>{importData.sections.reduce((s,x)=>s+x.rows.length,0)} filas</strong>
+              </div>
+
+              {/* Column mapping */}
+              <div style={{marginBottom:8,fontSize:12,fontWeight:'bold',color:'#2d3748'}}>
+                Mapeo de columnas — indica qué columna del Excel corresponde a cada campo:
+              </div>
+              <div className="col-map-grid">
+                {COLS_FIELDS.map(({key,label})=>(
+                  <div className="col-map-item" key={key}>
+                    <label>{label}</label>
+                    <select className="col-map-select" value={importCols[key]}
+                      onChange={e=>setImportCols(c=>({...c,[key]:parseInt(e.target.value)}))}>
+                      <option value={-1}>— ignorar —</option>
+                      {Array.from({length: importData.maxCols}, (_,i)=>(
+                        <option key={i} value={i}>Columna {colLabel(i)}</option>
+                      ))}
+                    </select>
+                  </div>
+                ))}
+              </div>
+
+              {/* Preview */}
+              <div style={{marginBottom:8,fontSize:12,fontWeight:'bold',color:'#2d3748'}}>
+                Vista previa — secciones detectadas:
+              </div>
+              <div className="import-preview">
+                {importData.sections.length===0
+                  ? <div className="import-no-data">No se detectaron secciones. Revisa el mapeo de columnas.</div>
+                  : importData.sections.map((sec,si)=>(
+                    <div key={si}>
+                      <div className="import-sec-header" onClick={()=>setOpenSecs(o=>({...o,[si]:!o[si]}))}>
+                        <span className="section-toggle">{openSecs[si]?'▼':'▶'}</span>
+                        <span style={{flex:1}}>{LETTERS[si]||si+1}. {sec.nombre}</span>
+                        <span style={{fontSize:10,opacity:0.7}}>{sec.rows.length} filas</span>
+                      </div>
+                      {openSecs[si] && sec.rows.slice(0,8).map((row,ri)=>(
+                        <div key={ri} className="import-row" style={{
+                          gridTemplateColumns:`60px 70px 1fr 90px 70px`
+                        }}>
+                          <span style={{color:'#a0aec0'}}>{row[importCols.cantidad]}</span>
+                          <span style={{color:'#a0aec0'}}>{row[importCols.unidad]}</span>
+                          <span>{String(row[importCols.descripcion]||'').slice(0,60)}</span>
+                          <span style={{textAlign:'right'}}>{row[importCols.precio]}</span>
+                          <span style={{textAlign:'right',color:'#a0aec0'}}>{row[importCols.descuento]}%</span>
+                        </div>
+                      ))}
+                      {openSecs[si] && sec.rows.length>8 && (
+                        <div style={{padding:'4px 10px',fontSize:11,color:'#a0aec0',background:'#fafafa'}}>
+                          … y {sec.rows.length-8} filas más
+                        </div>
+                      )}
+                    </div>
+                  ))
+                }
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" onClick={()=>setShowImport(false)}>Cancelar</button>
+              <button className="btn-primary" onClick={confirmImport}>
+                ✓ Importar al editor
+              </button>
             </div>
           </div>
         </div>
