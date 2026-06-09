@@ -9,733 +9,631 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 13px;
-      background: #edf2f7;
-      min-height: 100vh;
-      padding: 16px;
-    }
+    body { font-family: Tahoma, Arial, sans-serif; font-size: 13px; background: #edf2f7; min-height: 100vh; padding: 16px; }
     input[type=number]::-webkit-inner-spin-button,
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
     input[type=number] { -moz-appearance: textfield; }
 
-    .card {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
-      margin-bottom: 14px;
-      overflow: hidden;
-    }
+    .card { background: #fff; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); margin-bottom: 14px; overflow: hidden; }
     .card-body { padding: 16px; }
 
-    /* Header branding */
-    .brand-bar {
-      background: #1a6b3c;
-      color: #fff;
-      padding: 10px 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .brand-logo {
-      font-weight: 900;
-      font-size: 18px;
-      letter-spacing: 1px;
-      border: 2px solid rgba(255,255,255,0.7);
-      padding: 2px 8px;
-      border-radius: 4px;
-    }
+    .brand-bar { background: #1a6b3c; color: #fff; padding: 10px 16px; display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+    .brand-left { display: flex; align-items: center; gap: 12px; }
+    .brand-logo { font-weight: 900; font-size: 18px; letter-spacing: 1px; border: 2px solid rgba(255,255,255,0.7); padding: 2px 8px; border-radius: 4px; }
     .brand-title { font-size: 14px; font-weight: bold; opacity: 0.95; }
+    .brand-right { display: flex; align-items: center; gap: 8px; }
 
-    /* Header fields */
-    .fields-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr 180px 160px;
-      gap: 12px;
-      padding: 14px 16px;
-    }
-    .field-label {
-      display: block;
-      font-size: 10px;
-      font-weight: bold;
-      color: #718096;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-    .field-input {
-      border: 1px solid #e2e8f0;
-      border-radius: 4px;
-      padding: 6px 9px;
-      width: 100%;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 13px;
-      color: #2d3748;
-      transition: border-color 0.15s;
-    }
+    .session-bar { background: #f7fafc; border-bottom: 1px solid #e2e8f0; padding: 5px 16px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #718096; }
+    .session-dot { width: 7px; height: 7px; border-radius: 50%; background: #cbd5e0; display: inline-block; flex-shrink: 0; }
+    .session-dot.saved { background: #1a6b3c; }
+    .session-dot.unsaved { background: #e53e3e; }
+    .session-name { font-weight: bold; color: #2d3748; }
+
+    .fields-grid { display: grid; grid-template-columns: 1fr 1fr 180px 160px; gap: 12px; padding: 14px 16px; }
+    .field-label { display: block; font-size: 10px; font-weight: bold; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .field-input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 6px 9px; width: 100%; font-family: Tahoma, Arial, sans-serif; font-size: 13px; color: #2d3748; }
     .field-input:focus { outline: none; border-color: #1a6b3c; box-shadow: 0 0 0 2px rgba(26,107,60,0.15); }
 
-    /* Table */
-    .cot-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 12px;
-    }
-    .cot-table th {
-      background: #2d3748;
-      color: #fff;
-      font-weight: bold;
-      padding: 7px 8px;
-      text-align: center;
-      border: 1px solid #4a5568;
-      white-space: nowrap;
-    }
-    .cot-table td {
-      border: 1px solid #e2e8f0;
-      vertical-align: middle;
-      padding: 0;
-    }
+    .cot-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .cot-table th { background: #2d3748; color: #fff; font-weight: bold; padding: 7px 8px; text-align: center; border: 1px solid #4a5568; white-space: nowrap; }
+    .cot-table td { border: 1px solid #e2e8f0; vertical-align: middle; padding: 0; }
 
-    /* Section header row */
-    .sec-header-td {
-      background: #4a5568 !important;
-      border-color: #2d3748 !important;
-      padding: 0 !important;
-    }
-    .sec-header-inner {
-      display: flex;
-      align-items: center;
-      padding: 2px 8px;
-      gap: 6px;
-    }
-    .sec-letter {
-      color: #fff;
-      font-weight: bold;
-      font-size: 12px;
-      white-space: nowrap;
-      min-width: 18px;
-    }
-    .sec-name-input {
-      background: transparent;
-      border: none;
-      color: #fff;
-      font-weight: bold;
-      font-size: 12px;
-      font-family: Tahoma, Arial, sans-serif;
-      padding: 5px 4px;
-      flex: 1;
-      min-width: 0;
-    }
+    .sec-header-td { background: #4a5568 !important; border-color: #2d3748 !important; padding: 0 !important; }
+    .sec-header-inner { display: flex; align-items: center; padding: 2px 8px; gap: 6px; }
+    .sec-letter { color: #fff; font-weight: bold; font-size: 12px; white-space: nowrap; min-width: 18px; }
+    .sec-name-input { background: transparent; border: none; color: #fff; font-weight: bold; font-size: 12px; font-family: Tahoma, Arial, sans-serif; padding: 5px 4px; flex: 1; min-width: 0; }
     .sec-name-input:focus { outline: none; border-bottom: 1px solid rgba(255,255,255,0.5); }
-    .moneda-select {
-      background: rgba(255,255,255,0.12);
-      color: #fff;
-      border: 1px solid rgba(255,255,255,0.35);
-      border-radius: 3px;
-      padding: 2px 5px;
-      font-size: 11px;
-      font-family: Tahoma, Arial, sans-serif;
-      cursor: pointer;
-    }
+    .moneda-select { background: rgba(255,255,255,0.12); color: #fff; border: 1px solid rgba(255,255,255,0.35); border-radius: 3px; padding: 2px 5px; font-size: 11px; font-family: Tahoma, Arial, sans-serif; cursor: pointer; }
     .moneda-select option { color: #000; background: #fff; }
-    .btn-del-section {
-      background: rgba(220,53,69,0.35);
-      border: 1px solid rgba(220,53,69,0.5);
-      color: #fff;
-      cursor: pointer;
-      border-radius: 3px;
-      padding: 2px 8px;
-      font-size: 11px;
-      font-family: Tahoma, Arial, sans-serif;
-      white-space: nowrap;
-    }
+    .btn-del-section { background: rgba(220,53,69,0.35); border: 1px solid rgba(220,53,69,0.5); color: #fff; cursor: pointer; border-radius: 3px; padding: 2px 8px; font-size: 11px; font-family: Tahoma, Arial, sans-serif; white-space: nowrap; }
     .btn-del-section:hover { background: rgba(220,53,69,0.6); }
 
-    /* Data cells */
-    .cell-input {
-      border: none;
-      background: transparent;
-      width: 100%;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 12px;
-      padding: 4px 6px;
-      color: #2d3748;
-    }
+    .cell-input { border: none; background: transparent; width: 100%; font-family: Tahoma, Arial, sans-serif; font-size: 12px; padding: 4px 6px; color: #2d3748; }
     .cell-input:focus { outline: none; background: #fffde7; }
     .cell-center { text-align: center; }
     .cell-right { text-align: right; }
-    .cell-moneda {
-      display: flex;
-      align-items: center;
-      padding: 2px 5px;
-      gap: 2px;
-    }
+    .cell-moneda { display: flex; align-items: center; padding: 2px 5px; gap: 2px; }
     .moneda-sym { color: #a0aec0; font-size: 11px; white-space: nowrap; }
-    .cell-disc {
-      display: flex;
-      align-items: center;
-      padding: 2px 5px;
-    }
-    .cell-subtotal {
-      background: #f7fafc !important;
-      text-align: right;
-      padding: 4px 8px !important;
-      font-weight: 600;
-      color: #2d3748;
-      white-space: nowrap;
-    }
+    .cell-disc { display: flex; align-items: center; padding: 2px 5px; }
+    .cell-subtotal { background: #f7fafc !important; text-align: right; padding: 4px 8px !important; font-weight: 600; color: #2d3748; white-space: nowrap; }
     .cell-subtotal.empty { color: #a0aec0; font-weight: normal; }
-    .cell-del {
-      text-align: center;
-      padding: 2px !important;
-      width: 26px;
-    }
-    .btn-del-row {
-      background: none;
-      border: none;
-      color: #e53e3e;
-      cursor: pointer;
-      font-size: 15px;
-      line-height: 1;
-      padding: 2px 4px;
-      border-radius: 3px;
-      opacity: 0.6;
-    }
+    .cell-del { text-align: center; padding: 2px !important; width: 26px; }
+    .btn-del-row { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 3px; opacity: 0.6; }
     .btn-del-row:hover { opacity: 1; background: #fff5f5; }
 
-    /* Add row row */
-    .add-row-td {
-      padding: 4px 8px !important;
-      background: #fafafa !important;
-      border-top: 1px dashed #e2e8f0 !important;
-      border-bottom: 2px solid #cbd5e0 !important;
-    }
-    .btn-add-row {
-      background: none;
-      border: 1px dashed #1a6b3c;
-      color: #1a6b3c;
-      cursor: pointer;
-      border-radius: 3px;
-      padding: 2px 10px;
-      font-size: 11px;
-      font-family: Tahoma, Arial, sans-serif;
-    }
+    .add-row-td { padding: 4px 8px !important; background: #fafafa !important; border-top: 1px dashed #e2e8f0 !important; border-bottom: 2px solid #cbd5e0 !important; }
+    .btn-add-row { background: none; border: 1px dashed #1a6b3c; color: #1a6b3c; cursor: pointer; border-radius: 3px; padding: 2px 10px; font-size: 11px; font-family: Tahoma, Arial, sans-serif; }
     .btn-add-row:hover { background: #f0fff4; }
 
-    /* Subtotal row */
-    .subtotal-td {
-      background: #e2e8f0 !important;
-      font-weight: bold;
-      font-size: 12px;
-      color: #2d3748;
-      padding: 5px 10px !important;
-    }
+    .subtotal-td { background: #e2e8f0 !important; font-weight: bold; font-size: 12px; color: #2d3748; padding: 5px 10px !important; }
     .subtotal-label { text-align: right; }
     .subtotal-val { text-align: right; white-space: nowrap; }
-
-    /* Spacer row */
     .spacer-td { padding: 5px !important; background: #edf2f7 !important; border: none !important; }
+    .total-label-td { background: #1a202c !important; color: #fff !important; font-weight: bold; padding: 9px 12px !important; text-align: right; font-size: 13px; letter-spacing: 0.5px; }
+    .total-val-td { background: #1a202c !important; color: #fff !important; font-weight: bold; padding: 9px 12px !important; text-align: right; font-size: 13px; white-space: nowrap; }
 
-    /* Total general */
-    .total-label-td {
-      background: #1a202c !important;
-      color: #fff !important;
-      font-weight: bold;
-      padding: 9px 12px !important;
-      text-align: right;
-      font-size: 13px;
-      letter-spacing: 0.5px;
-    }
-    .total-val-td {
-      background: #1a202c !important;
-      color: #fff !important;
-      font-weight: bold;
-      padding: 9px 12px !important;
-      text-align: right;
-      font-size: 13px;
-      white-space: nowrap;
-    }
-
-    /* Action buttons */
-    .actions-bar {
-      display: flex;
-      gap: 10px;
-      padding: 12px 0 4px;
-      flex-wrap: wrap;
-    }
-    .btn-primary {
-      background: #1a6b3c;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 18px;
-      cursor: pointer;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 13px;
-      font-weight: bold;
-      transition: background 0.15s;
-    }
+    .actions-bar { display: flex; gap: 8px; padding: 12px 0 4px; flex-wrap: wrap; align-items: center; }
+    .btn-primary { background: #1a6b3c; color: #fff; border: none; border-radius: 5px; padding: 8px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 13px; font-weight: bold; }
     .btn-primary:hover { background: #145c32; }
-    .btn-secondary {
-      background: #2d3748;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      padding: 8px 18px;
-      cursor: pointer;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 13px;
-      font-weight: bold;
-      transition: background 0.15s;
-    }
+    .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+    .btn-secondary { background: #2d3748; color: #fff; border: none; border-radius: 5px; padding: 8px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 13px; font-weight: bold; }
     .btn-secondary:hover { background: #1a202c; }
+    .btn-accent { background: #2b6cb0; color: #fff; border: none; border-radius: 5px; padding: 8px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 13px; font-weight: bold; }
+    .btn-accent:hover { background: #2c5282; }
+    .btn-accent:disabled { background: #a0aec0; cursor: not-allowed; }
+    .btn-ghost { background: #e2e8f0; color: #2d3748; border: none; border-radius: 5px; padding: 8px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 13px; }
+    .btn-ghost:hover { background: #cbd5e0; }
+    .btn-icon { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; border-radius: 4px; padding: 4px 10px; cursor: pointer; font-size: 13px; font-family: Tahoma, Arial, sans-serif; }
+    .btn-icon:hover { background: rgba(255,255,255,0.25); }
 
-    /* Prompt panel */
     .prompt-panel { border-top: 4px solid #2d3748; }
-    .prompt-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 12px 16px;
-      background: #f7fafc;
-      border-bottom: 1px solid #e2e8f0;
-    }
+    .prompt-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: #f7fafc; border-bottom: 1px solid #e2e8f0; }
     .prompt-title { font-weight: bold; font-size: 14px; color: #2d3748; }
     .prompt-actions { display: flex; gap: 8px; }
-    .btn-copy {
-      background: #1a6b3c;
-      color: #fff;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 12px;
-      font-weight: bold;
-    }
+    .btn-copy { background: #1a6b3c; color: #fff; border: none; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 12px; font-weight: bold; }
     .btn-copy:hover { background: #145c32; }
-    .btn-copy.copied { background: #2b6cb0; }
-    .btn-close {
-      background: #e2e8f0;
-      color: #2d3748;
-      border: none;
-      border-radius: 4px;
-      padding: 6px 14px;
-      cursor: pointer;
-      font-family: Tahoma, Arial, sans-serif;
-      font-size: 12px;
-    }
+    .btn-close { background: #e2e8f0; color: #2d3748; border: none; border-radius: 4px; padding: 6px 14px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 12px; }
     .btn-close:hover { background: #cbd5e0; }
-    .prompt-textarea {
-      width: 100%;
-      height: 320px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      border: none;
-      padding: 12px 16px;
-      resize: vertical;
-      color: #2d3748;
-      line-height: 1.5;
-    }
+    .prompt-textarea { width: 100%; height: 320px; font-family: 'Courier New', monospace; font-size: 12px; border: none; padding: 12px 16px; resize: vertical; color: #2d3748; line-height: 1.5; }
     .prompt-textarea:focus { outline: none; }
 
-    /* Toast */
-    .toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      background: #1a6b3c;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 6px;
-      font-weight: bold;
-      font-size: 13px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-      z-index: 9999;
-      animation: fadeIn 0.2s ease;
-    }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #1a6b3c; color: #fff; padding: 10px 20px; border-radius: 6px; font-weight: bold; font-size: 13px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 9999; animation: fadeIn 0.2s ease; }
+    .toast.error { background: #c53030; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 16px; }
+    .modal { background: #fff; border-radius: 10px; width: 100%; max-width: 680px; max-height: 88vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+    .modal-header { background: #2d3748; color: #fff; padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; }
+    .modal-title { font-size: 15px; font-weight: bold; }
+    .modal-body { flex: 1; overflow-y: auto; padding: 16px; }
+    .modal-footer { padding: 12px 16px; border-top: 1px solid #e2e8f0; display: flex; gap: 8px; justify-content: flex-end; flex-shrink: 0; background: #f7fafc; }
+
+    .config-field { margin-bottom: 14px; }
+    .config-field label { display: block; font-size: 11px; font-weight: bold; color: #718096; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .config-field input { border: 1px solid #e2e8f0; border-radius: 4px; padding: 8px 10px; width: 100%; font-family: Tahoma, Arial, sans-serif; font-size: 13px; }
+    .config-field input:focus { outline: none; border-color: #2b6cb0; }
+    .config-info { background: #ebf8ff; border-left: 3px solid #2b6cb0; padding: 10px 12px; border-radius: 0 4px 4px 0; font-size: 12px; color: #2c5282; line-height: 1.6; margin-bottom: 14px; }
+    .config-status { display: flex; align-items: center; gap: 6px; font-size: 12px; margin-top: 8px; padding: 6px 8px; border-radius: 4px; }
+    .config-status.ok { color: #1a6b3c; background: #f0fff4; }
+    .config-status.err { color: #c53030; background: #fff5f5; }
+
+    .sessions-empty { text-align: center; padding: 40px 20px; color: #a0aec0; }
+    .sessions-empty .icon { font-size: 40px; margin-bottom: 10px; }
+    .session-card { border: 1px solid #e2e8f0; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }
+    .session-card:hover { border-color: #bee3f8; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .session-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 3px; gap: 8px; }
+    .session-card-name { font-weight: bold; font-size: 13px; color: #2d3748; flex: 1; }
+    .session-card-meta { font-size: 11px; color: #718096; margin-bottom: 8px; }
+    .session-card-bottom { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+    .session-card-total { font-size: 12px; font-weight: bold; color: #2d3748; }
+    .session-card-actions { display: flex; gap: 6px; align-items: center; }
+
+    .status-chip { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; text-transform: uppercase; white-space: nowrap; }
+    .status-Borrador  { background: #fefce8; color: #92400e; border: 1px solid #fde68a; }
+    .status-Completada{ background: #f0fff4; color: #1a6b3c; border: 1px solid #9ae6b4; }
+    .status-Enviada   { background: #ebf8ff; color: #2c5282; border: 1px solid #bee3f8; }
+    .status-Aprobada  { background: #faf5ff; color: #553c9a; border: 1px solid #d6bcfa; }
+
+    .btn-sm { padding: 4px 10px; border: none; border-radius: 4px; cursor: pointer; font-family: Tahoma, Arial, sans-serif; font-size: 11px; font-weight: bold; }
+    .btn-sm-green { background: #1a6b3c; color: #fff; }
+    .btn-sm-green:hover { background: #145c32; }
+    .btn-sm-red { background: #fff5f5; color: #c53030; border: 1px solid #fed7d7; }
+    .btn-sm-red:hover { background: #fed7d7; }
+    .status-select { font-size: 11px; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3px 6px; font-family: Tahoma, Arial, sans-serif; cursor: pointer; background: #fff; color: #2d3748; }
+
+    .spinner { display: inline-block; width: 13px; height: 13px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 5px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .section-badge { background: #e2e8f0; color: #4a5568; border-radius: 10px; padding: 1px 7px; font-size: 10px; font-weight: bold; }
+    .vdiv { width: 1px; background: rgba(255,255,255,0.25); align-self: stretch; margin: 0 2px; }
+    .vdiv-dark { width: 1px; background: #e2e8f0; align-self: stretch; margin: 0 4px; }
 
     @media (max-width: 700px) {
       .fields-grid { grid-template-columns: 1fr 1fr; }
       body { padding: 8px; }
+      .brand-title { display: none; }
     }
   </style>
 </head>
 <body>
-  <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef } = React;
 
-  <script type="text/babel">
-    const { useState, useRef, useCallback } = React;
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+let _uid = 0;
+const newId = () => `id_${++_uid}_${Math.random().toString(36).slice(2,6)}`;
+const makeRow = () => ({ id: newId(), cantidad: "", unidad: "", descripcion: "", precio: "", descuento: "0" });
+const makeSection = (nombre = "Nueva sección") => ({ id: newId(), nombre, moneda: "Q", filas: [makeRow(), makeRow(), makeRow()] });
 
-    const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    let uid = 0;
-    const newId = () => `id_${++uid}_${Date.now()}`;
+const calcRowSub = f => (parseFloat(f.cantidad)||0) * (parseFloat(f.precio)||0) * (1-(parseFloat(f.descuento)||0)/100);
+const calcSecTotal = sec => sec.filas.reduce((s,f)=>s+calcRowSub(f),0);
+const fmt = (n,m) => `${m} ${n.toLocaleString("es-GT",{minimumFractionDigits:2,maximumFractionDigits:2})}`;
 
-    const makeRow = () => ({
-      id: newId(),
-      cantidad: "",
-      unidad: "",
-      descripcion: "",
-      precio: "",
-      descuento: "0",
-    });
+function App() {
+  const [header, setHeader] = useState({ nombre:"COT-XXX Servicio de...", cliente:"", numero:"", tipo:"Local" });
+  const [sections, setSections] = useState([makeSection("Descripción de trabajos")]);
 
-    const makeSection = (nombre = "Nueva sección") => ({
-      id: newId(),
-      nombre,
-      moneda: "Q",
-      filas: [makeRow(), makeRow(), makeRow()],
-    });
+  // Notion / Worker
+  const [workerUrl, setWorkerUrl] = useState(()=>localStorage.getItem("shc_worker_url")||"");
+  const [currentSessionId, setCurrentSessionId] = useState(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [sessions, setSessions] = useState([]);
+  const [isLoadingSessions, setIsLoadingSessions] = useState(false);
 
-    function calcRowSub(fila) {
-      const q = parseFloat(fila.cantidad) || 0;
-      const p = parseFloat(fila.precio) || 0;
-      const d = parseFloat(fila.descuento) || 0;
-      return q * p * (1 - d / 100);
-    }
+  // Modals
+  const [showConfig, setShowConfig] = useState(false);
+  const [showSessions, setShowSessions] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
+  const [configUrl, setConfigUrl] = useState("");
+  const [configTestStatus, setConfigTestStatus] = useState(null);
+  const [configTesting, setConfigTesting] = useState(false);
 
-    function calcSectionTotal(sec) {
-      return sec.filas.reduce((s, f) => s + calcRowSub(f), 0);
-    }
+  // Toast & prompt
+  const [toast, setToast] = useState(null);
+  const [promptText, setPromptText] = useState("");
+  const [copied, setCopied] = useState(false);
 
-    function fmt(n, mon) {
-      return `${mon} ${n.toLocaleString("es-GT", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-    }
+  const showToast = (msg, type="ok") => { setToast({msg,type}); setTimeout(()=>setToast(null),2600); };
 
-    function App() {
-      const [header, setHeader] = useState({
-        nombre: "COT-XXX Servicio de...",
-        cliente: "",
-        numero: "",
-        tipo: "Local",
+  const mark = () => setIsDirty(true);
+
+  // ── Data ops ────────────────────────────────────────────
+  const updHeader  = (k,v) => { setHeader(h=>({...h,[k]:v})); mark(); };
+  const addSection = ()    => { setSections(s=>[...s,makeSection()]); mark(); };
+  const delSection = id    => { setSections(s=>s.filter(x=>x.id!==id)); mark(); };
+  const updSection = (id,k,v) => { setSections(s=>s.map(x=>x.id===id?{...x,[k]:v}:x)); mark(); };
+  const addRow     = sid   => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:[...x.filas,makeRow()]}:x)); mark(); };
+  const delRow     = (sid,rid) => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:x.filas.filter(f=>f.id!==rid)}:x)); mark(); };
+  const updRow     = (sid,rid,k,v) => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:x.filas.map(f=>f.id===rid?{...f,[k]:v}:f)}:x)); mark(); };
+
+  const totalGeneral = () => {
+    const t={};
+    sections.forEach(sec=>{ const v=calcSecTotal(sec); t[sec.moneda]=(t[sec.moneda]||0)+v; });
+    return t;
+  };
+  const totals = totalGeneral();
+
+  const newCotizacion = () => {
+    if(isDirty && !window.confirm("¿Descartar cambios y empezar una cotización nueva?")) return;
+    setHeader({nombre:"COT-XXX Servicio de...",cliente:"",numero:"",tipo:"Local"});
+    setSections([makeSection("Descripción de trabajos")]);
+    setCurrentSessionId(null); setIsDirty(false);
+  };
+
+  // ── Config ──────────────────────────────────────────────
+  const openConfig = () => { setConfigUrl(workerUrl); setConfigTestStatus(null); setShowConfig(true); };
+  const saveConfig = () => {
+    const url = configUrl.replace(/\/$/,"");
+    setWorkerUrl(url); localStorage.setItem("shc_worker_url",url);
+    setShowConfig(false); showToast("✓ Configuración guardada");
+  };
+  const testConfig = async () => {
+    setConfigTesting(true); setConfigTestStatus(null);
+    try {
+      const r = await fetch(configUrl.replace(/\/$/,"")+"/sesiones");
+      setConfigTestStatus(r.ok?"ok":"error");
+    } catch { setConfigTestStatus("error"); }
+    setConfigTesting(false);
+  };
+
+  // ── Save ────────────────────────────────────────────────
+  const buildPayload = (estado="Borrador") => {
+    const t=totalGeneral();
+    return {
+      nombre: header.nombre||"Sin nombre", cliente: header.cliente||"",
+      noCOT: header.numero||"", tipo: header.tipo, estado,
+      totalGTQ: t["Q"]||null, totalUSD: t["$"]||null,
+      secciones: sections.length,
+      datosJSON: JSON.stringify({header,sections}),
+      fecha: new Date().toISOString().split("T")[0],
+    };
+  };
+
+  const saveSession = async (estado="Borrador") => {
+    if(!workerUrl){ openConfig(); showToast("Configura el Worker URL primero","error"); return; }
+    setIsSaving(true);
+    try {
+      let resp;
+      if(currentSessionId){
+        resp = await fetch(`${workerUrl}/sesiones/${currentSessionId}`,{
+          method:"PATCH", headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(buildPayload(estado))
+        });
+      } else {
+        resp = await fetch(`${workerUrl}/sesiones`,{
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body:JSON.stringify(buildPayload(estado))
+        });
+        if(resp.ok){ const d=await resp.json(); setCurrentSessionId(d.id); }
+      }
+      if(resp && resp.ok){ setIsDirty(false); showToast("💾 Guardado en Notion"); }
+      else showToast("Error al guardar. Verifica la conexión.","error");
+    } catch(e){ showToast("No se pudo conectar al Worker","error"); }
+    setIsSaving(false);
+  };
+
+  // ── Load sessions ────────────────────────────────────────
+  const loadSessions = async () => {
+    if(!workerUrl){ openConfig(); return; }
+    setIsLoadingSessions(true); setShowSessions(true); setSessions([]);
+    try {
+      const r = await fetch(`${workerUrl}/sesiones`);
+      const d = await r.json();
+      setSessions(d.sessions||[]);
+    } catch { showToast("No se pudo cargar las sesiones","error"); }
+    setIsLoadingSessions(false);
+  };
+
+  // ── Open session ─────────────────────────────────────────
+  const openSession = async (session) => {
+    try {
+      let datosJSON = session.datosJSON;
+      if(!datosJSON && workerUrl){
+        const r = await fetch(`${workerUrl}/sesiones/${session.id}`);
+        const d = await r.json();
+        datosJSON = d.datosJSON;
+      }
+      const {header:h, sections:s} = JSON.parse(datosJSON);
+      setHeader(h); setSections(s);
+      setCurrentSessionId(session.id); setIsDirty(false);
+      setShowSessions(false);
+      showToast(`✓ "${session.nombre}" cargada`);
+    } catch { showToast("Error al cargar la sesión","error"); }
+  };
+
+  // ── Update status ────────────────────────────────────────
+  const updateStatus = async (sessionId, estado) => {
+    if(!workerUrl) return;
+    try {
+      await fetch(`${workerUrl}/sesiones/${sessionId}`,{
+        method:"PATCH", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({estado})
       });
-      const [sections, setSections] = useState([
-        makeSection("Descripción de trabajos"),
-      ]);
-      const [promptText, setPromptText] = useState("");
-      const [showPrompt, setShowPrompt] = useState(false);
-      const [copied, setCopied] = useState(false);
-      const [showToast, setShowToast] = useState(false);
+      setSessions(s=>s.map(x=>x.id===sessionId?{...x,estado}:x));
+    } catch { showToast("Error al actualizar estado","error"); }
+  };
 
-      const updHeader = (k, v) => setHeader(h => ({ ...h, [k]: v }));
+  // ── Delete ────────────────────────────────────────────────
+  const deleteSession = async (id, nombre) => {
+    if(!window.confirm(`¿Eliminar "${nombre}"?`)) return;
+    try {
+      await fetch(`${workerUrl}/sesiones/${id}`,{method:"DELETE"});
+      setSessions(s=>s.filter(x=>x.id!==id));
+      if(currentSessionId===id){ setCurrentSessionId(null); setIsDirty(true); }
+      showToast("Sesión eliminada");
+    } catch { showToast("Error al eliminar","error"); }
+  };
 
-      const addSection = () => setSections(s => [...s, makeSection()]);
-
-      const delSection = (id) => setSections(s => s.filter(x => x.id !== id));
-
-      const updSection = (id, k, v) =>
-        setSections(s => s.map(x => x.id === id ? { ...x, [k]: v } : x));
-
-      const addRow = (sid) =>
-        setSections(s => s.map(x =>
-          x.id === sid ? { ...x, filas: [...x.filas, makeRow()] } : x));
-
-      const delRow = (sid, rid) =>
-        setSections(s => s.map(x =>
-          x.id === sid ? { ...x, filas: x.filas.filter(f => f.id !== rid) } : x));
-
-      const updRow = (sid, rid, k, v) =>
-        setSections(s => s.map(x =>
-          x.id === sid
-            ? { ...x, filas: x.filas.map(f => f.id === rid ? { ...f, [k]: v } : f) }
-            : x));
-
-      const totalGeneral = () => {
-        const t = {};
-        sections.forEach(sec => {
-          const v = calcSectionTotal(sec);
-          t[sec.moneda] = (t[sec.moneda] || 0) + v;
-        });
-        return t;
-      };
-
-      const generatePrompt = () => {
-        let txt = "";
-        txt += `COTIZACIÓN: ${header.nombre}\n`;
-        txt += `CLIENTE: ${header.cliente || "(sin especificar)"}\n`;
-        txt += `COT: ${header.numero || "(sin número)"}\n`;
-        txt += `TIPO: ${header.tipo}\n\n`;
-
-        sections.forEach((sec, i) => {
-          const L = LETTERS[i] || String(i + 1);
-          const total = calcSectionTotal(sec);
-          txt += `SECCIÓN ${L} - ${sec.nombre}:\n`;
-          txt += `| Cant | Unidad | Descripción | P.Unit | Desc% |\n`;
-          txt += `|------|--------|-------------|--------|-------|\n`;
-          const hasData = sec.filas.some(f => f.cantidad || f.descripcion || f.precio);
-          if (hasData) {
-            sec.filas.forEach(f => {
-              if (f.cantidad || f.descripcion || f.precio) {
-                const p = f.precio ? `${sec.moneda}${parseFloat(f.precio).toLocaleString("es-GT", { minimumFractionDigits: 2 })}` : "-";
-                txt += `| ${f.cantidad || "-"} | ${f.unidad || "-"} | ${f.descripcion || "-"} | ${p} | ${f.descuento || "0"}% |\n`;
-              }
-            });
-          } else {
-            txt += `| (sin datos) |\n`;
-          }
-          txt += `SUB-TOTAL ${L}: ${fmt(total, sec.moneda)}\n\n`;
-        });
-
-        const totals = totalGeneral();
-        txt += `TOTAL GENERAL:\n`;
-        if (Object.keys(totals).length === 0) {
-          txt += `Q 0.00\n`;
-        } else {
-          Object.entries(totals).forEach(([m, v]) => { txt += `${fmt(v, m)}\n`; });
+  // ── Prompt ───────────────────────────────────────────────
+  const generatePrompt = () => {
+    let txt=`COTIZACIÓN: ${header.nombre}\nCLIENTE: ${header.cliente||"(sin especificar)"}\nCOT: ${header.numero||"(sin número)"}\nTIPO: ${header.tipo}\n\n`;
+    sections.forEach((sec,i)=>{
+      const L=LETTERS[i]||String(i+1), total=calcSecTotal(sec);
+      txt+=`SECCIÓN ${L} - ${sec.nombre}:\n| Cant | Unidad | Descripción | P.Unit | Desc% |\n|------|--------|-------------|--------|-------|\n`;
+      sec.filas.forEach(f=>{
+        if(f.cantidad||f.descripcion||f.precio){
+          const p=f.precio?`${sec.moneda}${parseFloat(f.precio).toLocaleString("es-GT",{minimumFractionDigits:2})}`:"−";
+          txt+=`| ${f.cantidad||"−"} | ${f.unidad||"−"} | ${f.descripcion||"−"} | ${p} | ${f.descuento||"0"}% |\n`;
         }
+      });
+      txt+=`SUB-TOTAL ${L}: ${fmt(total,sec.moneda)}\n\n`;
+    });
+    txt+=`TOTAL GENERAL:\n`;
+    if(!Object.keys(totals).length) txt+="Q 0.00\n";
+    else Object.entries(totals).forEach(([m,v])=>{txt+=`${fmt(v,m)}\n`;});
+    setPromptText(txt); setShowPrompt(true); setCopied(false);
+  };
 
-        setPromptText(txt);
-        setShowPrompt(true);
-        setCopied(false);
-      };
+  const copyPrompt = () => {
+    navigator.clipboard.writeText(promptText).then(()=>{
+      setCopied(true); showToast("📋 Copiado al portapapeles");
+      setTimeout(()=>setCopied(false),3000);
+    });
+  };
 
-      const copyPrompt = () => {
-        navigator.clipboard.writeText(promptText).then(() => {
-          setCopied(true);
-          setShowToast(true);
-          setTimeout(() => setShowToast(false), 2200);
-          setTimeout(() => setCopied(false), 3000);
-        });
-      };
+  const fmtDate = iso => {
+    if(!iso) return "";
+    const diff=Date.now()-new Date(iso).getTime(), m=Math.floor(diff/60000), h=Math.floor(m/60), d=Math.floor(h/24);
+    if(m<1) return "Ahora"; if(m<60) return `Hace ${m}m`; if(h<24) return `Hace ${h}h`;
+    if(d<7) return `Hace ${d}d`; return new Date(iso).toLocaleDateString("es-GT");
+  };
 
-      const totals = totalGeneral();
-
-      return (
-        <div>
-          {/* Branding + Header */}
-          <div className="card">
-            <div className="brand-bar">
-              <span className="brand-logo">SHC</span>
-              <span className="brand-title">Ingeniería Hidráulica — Editor de Cotizaciones</span>
-            </div>
-            <div className="fields-grid">
-              <div>
-                <label className="field-label">Nombre cotización</label>
-                <input className="field-input" value={header.nombre}
-                  onChange={e => updHeader("nombre", e.target.value)} />
-              </div>
-              <div>
-                <label className="field-label">Cliente</label>
-                <input className="field-input" value={header.cliente}
-                  onChange={e => updHeader("cliente", e.target.value)}
-                  placeholder="Nombre del cliente" />
-              </div>
-              <div>
-                <label className="field-label">Número COT</label>
-                <input className="field-input" value={header.numero}
-                  onChange={e => updHeader("numero", e.target.value)}
-                  placeholder="COT-2026-XXX" />
-              </div>
-              <div>
-                <label className="field-label">Tipo</label>
-                <select className="field-input" value={header.tipo}
-                  onChange={e => updHeader("tipo", e.target.value)}>
-                  <option>Local</option>
-                  <option>Importación</option>
-                </select>
-              </div>
-            </div>
+  // ── RENDER ────────────────────────────────────────────────
+  return (
+    <div>
+      {/* Brand + session bar */}
+      <div className="card">
+        <div className="brand-bar">
+          <div className="brand-left">
+            <span className="brand-logo">SHC</span>
+            <span className="brand-title">Ingeniería Hidráulica — Editor de Cotizaciones</span>
           </div>
+          <div className="brand-right">
+            <button className="btn-icon" onClick={loadSessions}>📂 Sesiones</button>
+            <span className="vdiv"></span>
+            <button className="btn-icon" onClick={openConfig} title="Configurar conexión Notion">⚙️</button>
+          </div>
+        </div>
 
-          {/* Table card */}
-          <div className="card">
-            <div style={{ overflowX: "auto" }}>
-              <table className="cot-table">
-                <thead>
-                  <tr>
-                    <th style={{ width: 72 }}>Cantidad</th>
-                    <th style={{ width: 80 }}>Unidad</th>
-                    <th>Descripción</th>
-                    <th style={{ width: 130 }}>Precio Unitario</th>
-                    <th style={{ width: 95 }}>% Descuento</th>
-                    <th style={{ width: 130 }}>Sub-total</th>
-                    <th style={{ width: 28 }}></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {sections.map((sec, secIdx) => {
-                    const L = LETTERS[secIdx] || String(secIdx + 1);
-                    const secTotal = calcSectionTotal(sec);
+        <div className="session-bar">
+          <span className={`session-dot${currentSessionId?(isDirty?" unsaved":" saved"):""}`}></span>
+          {currentSessionId
+            ? isDirty
+              ? <span>Cambios sin guardar — <span className="session-name">{header.nombre}</span></span>
+              : <span>Guardada: <span className="session-name">{header.nombre}</span></span>
+            : <span>Nueva cotización (sin guardar)</span>
+          }
+          {currentSessionId && !isDirty &&
+            <span style={{marginLeft:"auto",color:"#1a6b3c",fontWeight:"bold",fontSize:11}}>✓ Sincronizada con Notion</span>}
+        </div>
 
-                    return (
-                      <React.Fragment key={sec.id}>
-                        {/* Section header */}
-                        <tr>
-                          <td colSpan={7} className="sec-header-td">
-                            <div className="sec-header-inner">
-                              <span className="sec-letter">{L}.</span>
-                              <input
-                                className="sec-name-input"
-                                value={sec.nombre}
-                                onChange={e => updSection(sec.id, "nombre", e.target.value)}
-                                placeholder="Nombre de la sección"
-                              />
-                              <select
-                                className="moneda-select"
-                                value={sec.moneda}
-                                onChange={e => updSection(sec.id, "moneda", e.target.value)}
-                              >
-                                <option value="Q">Q (GTQ)</option>
-                                <option value="$">$ (USD)</option>
-                              </select>
-                              <button className="btn-del-section"
-                                onClick={() => delSection(sec.id)}
-                                title="Eliminar sección">
-                                × Sección
-                              </button>
+        <div className="fields-grid">
+          <div>
+            <label className="field-label">Nombre cotización</label>
+            <input className="field-input" value={header.nombre} onChange={e=>updHeader("nombre",e.target.value)} />
+          </div>
+          <div>
+            <label className="field-label">Cliente</label>
+            <input className="field-input" value={header.cliente} onChange={e=>updHeader("cliente",e.target.value)} placeholder="Nombre del cliente" />
+          </div>
+          <div>
+            <label className="field-label">Número COT</label>
+            <input className="field-input" value={header.numero} onChange={e=>updHeader("numero",e.target.value)} placeholder="COT-2026-XXX" />
+          </div>
+          <div>
+            <label className="field-label">Tipo</label>
+            <select className="field-input" value={header.tipo} onChange={e=>updHeader("tipo",e.target.value)}>
+              <option>Local</option>
+              <option>Importación</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      {/* Table */}
+      <div className="card">
+        <div style={{overflowX:"auto"}}>
+          <table className="cot-table">
+            <thead>
+              <tr>
+                <th style={{width:72}}>Cantidad</th>
+                <th style={{width:80}}>Unidad</th>
+                <th>Descripción</th>
+                <th style={{width:130}}>Precio Unitario</th>
+                <th style={{width:95}}>% Descuento</th>
+                <th style={{width:130}}>Sub-total</th>
+                <th style={{width:28}}></th>
+              </tr>
+            </thead>
+            <tbody>
+              {sections.map((sec,secIdx)=>{
+                const L=LETTERS[secIdx]||String(secIdx+1), secTotal=calcSecTotal(sec);
+                return (
+                  <React.Fragment key={sec.id}>
+                    <tr>
+                      <td colSpan={7} className="sec-header-td">
+                        <div className="sec-header-inner">
+                          <span className="sec-letter">{L}.</span>
+                          <input className="sec-name-input" value={sec.nombre} onChange={e=>updSection(sec.id,"nombre",e.target.value)} placeholder="Nombre de la sección" />
+                          <select className="moneda-select" value={sec.moneda} onChange={e=>updSection(sec.id,"moneda",e.target.value)}>
+                            <option value="Q">Q (GTQ)</option>
+                            <option value="$">$ (USD)</option>
+                          </select>
+                          <button className="btn-del-section" onClick={()=>delSection(sec.id)}>× Sección</button>
+                        </div>
+                      </td>
+                    </tr>
+                    {sec.filas.map(fila=>{
+                      const sub=calcRowSub(fila);
+                      return (
+                        <tr key={fila.id}>
+                          <td><input type="number" className="cell-input cell-center" value={fila.cantidad} onChange={e=>updRow(sec.id,fila.id,"cantidad",e.target.value)} placeholder="0" min="0"/></td>
+                          <td><input className="cell-input cell-center" value={fila.unidad} onChange={e=>updRow(sec.id,fila.id,"unidad",e.target.value)} placeholder="Global"/></td>
+                          <td><input className="cell-input" value={fila.descripcion} onChange={e=>updRow(sec.id,fila.id,"descripcion",e.target.value)} placeholder="Descripción del ítem..."/></td>
+                          <td>
+                            <div className="cell-moneda">
+                              <span className="moneda-sym">{sec.moneda}</span>
+                              <input type="number" className="cell-input cell-right" style={{flex:1}} value={fila.precio} onChange={e=>updRow(sec.id,fila.id,"precio",e.target.value)} placeholder="0.00" min="0"/>
                             </div>
                           </td>
-                        </tr>
-
-                        {/* Data rows */}
-                        {sec.filas.map(fila => {
-                          const sub = calcRowSub(fila);
-                          return (
-                            <tr key={fila.id}>
-                              <td>
-                                <input type="number" className="cell-input cell-center"
-                                  value={fila.cantidad}
-                                  onChange={e => updRow(sec.id, fila.id, "cantidad", e.target.value)}
-                                  placeholder="0" min="0" />
-                              </td>
-                              <td>
-                                <input className="cell-input cell-center"
-                                  value={fila.unidad}
-                                  onChange={e => updRow(sec.id, fila.id, "unidad", e.target.value)}
-                                  placeholder="Global" />
-                              </td>
-                              <td>
-                                <input className="cell-input"
-                                  value={fila.descripcion}
-                                  onChange={e => updRow(sec.id, fila.id, "descripcion", e.target.value)}
-                                  placeholder="Descripción del ítem..." />
-                              </td>
-                              <td>
-                                <div className="cell-moneda">
-                                  <span className="moneda-sym">{sec.moneda}</span>
-                                  <input type="number" className="cell-input cell-right"
-                                    style={{ flex: 1 }}
-                                    value={fila.precio}
-                                    onChange={e => updRow(sec.id, fila.id, "precio", e.target.value)}
-                                    placeholder="0.00" min="0" />
-                                </div>
-                              </td>
-                              <td>
-                                <div className="cell-disc">
-                                  <input type="number" className="cell-input cell-right"
-                                    style={{ flex: 1 }}
-                                    value={fila.descuento}
-                                    onChange={e => updRow(sec.id, fila.id, "descuento", e.target.value)}
-                                    min="0" max="100" />
-                                  <span className="moneda-sym" style={{ marginLeft: 2 }}>%</span>
-                                </div>
-                              </td>
-                              <td className={`cell-subtotal${sub === 0 ? " empty" : ""}`}>
-                                {sub > 0 ? fmt(sub, sec.moneda) : `${sec.moneda} -`}
-                              </td>
-                              <td className="cell-del">
-                                <button className="btn-del-row"
-                                  onClick={() => delRow(sec.id, fila.id)}
-                                  title="Eliminar fila">×</button>
-                              </td>
-                            </tr>
-                          );
-                        })}
-
-                        {/* Add row */}
-                        <tr>
-                          <td colSpan={7} className="add-row-td">
-                            <button className="btn-add-row"
-                              onClick={() => addRow(sec.id)}>
-                              + Agregar fila
-                            </button>
+                          <td>
+                            <div className="cell-disc">
+                              <input type="number" className="cell-input cell-right" style={{flex:1}} value={fila.descuento} onChange={e=>updRow(sec.id,fila.id,"descuento",e.target.value)} min="0" max="100"/>
+                              <span className="moneda-sym" style={{marginLeft:2}}>%</span>
+                            </div>
                           </td>
+                          <td className={`cell-subtotal${sub===0?" empty":""}`}>{sub>0?fmt(sub,sec.moneda):`${sec.moneda} -`}</td>
+                          <td className="cell-del"><button className="btn-del-row" onClick={()=>delRow(sec.id,fila.id)}>×</button></td>
                         </tr>
+                      );
+                    })}
+                    <tr>
+                      <td colSpan={7} className="add-row-td">
+                        <button className="btn-add-row" onClick={()=>addRow(sec.id)}>+ Agregar fila</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td colSpan={5} className="subtotal-td subtotal-label">Sub-total {L}</td>
+                      <td className="subtotal-td subtotal-val">{fmt(secTotal,sec.moneda)}</td>
+                      <td className="subtotal-td"></td>
+                    </tr>
+                    {secIdx<sections.length-1 && <tr><td colSpan={7} className="spacer-td"></td></tr>}
+                  </React.Fragment>
+                );
+              })}
+              <tr><td colSpan={7} className="spacer-td" style={{padding:3}}></td></tr>
+              <tr>
+                <td colSpan={5} className="total-label-td">TOTAL GENERAL</td>
+                <td colSpan={2} className="total-val-td">
+                  {!Object.keys(totals).length?"Q 0.00":Object.entries(totals).map(([m,v])=><div key={m}>{fmt(v,m)}</div>)}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-                        {/* Subtotal row */}
-                        <tr>
-                          <td colSpan={5} className="subtotal-td subtotal-label">
-                            Sub-total {L}
-                          </td>
-                          <td className="subtotal-td subtotal-val">
-                            {fmt(secTotal, sec.moneda)}
-                          </td>
-                          <td className="subtotal-td"></td>
-                        </tr>
+        <div className="card-body" style={{paddingTop:12}}>
+          <div className="actions-bar">
+            <button className="btn-primary" onClick={addSection}>+ Sección</button>
+            <button className="btn-ghost" onClick={newCotizacion}>🆕 Nueva</button>
+            <span className="vdiv-dark"></span>
+            <button className="btn-accent" onClick={()=>saveSession("Borrador")} disabled={isSaving}>
+              {isSaving?<><span className="spinner"></span>Guardando…</>:"💾 Guardar"}
+            </button>
+            <button className="btn-secondary" onClick={()=>saveSession("Completada")} disabled={isSaving}>
+              ✅ Completada
+            </button>
+            <span className="vdiv-dark"></span>
+            <button className="btn-ghost" onClick={generatePrompt}>📋 Generar Prompt</button>
+          </div>
+        </div>
+      </div>
 
-                        {/* Spacer between sections */}
-                        {secIdx < sections.length - 1 && (
-                          <tr><td colSpan={7} className="spacer-td"></td></tr>
-                        )}
-                      </React.Fragment>
-                    );
-                  })}
-
-                  {/* Spacer before total */}
-                  <tr><td colSpan={7} className="spacer-td" style={{ padding: 3 }}></td></tr>
-
-                  {/* Total general */}
-                  <tr>
-                    <td colSpan={5} className="total-label-td">TOTAL GENERAL</td>
-                    <td colSpan={2} className="total-val-td">
-                      {Object.keys(totals).length === 0
-                        ? "Q 0.00"
-                        : Object.entries(totals).map(([m, v]) => (
-                          <div key={m}>{fmt(v, m)}</div>
-                        ))}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            {/* Action buttons */}
-            <div className="card-body" style={{ paddingTop: 12 }}>
-              <div className="actions-bar">
-                <button className="btn-primary" onClick={addSection}>
-                  + Agregar Sección
-                </button>
-                <button className="btn-secondary" onClick={generatePrompt}>
-                  📋 Generar Prompt para Skill
-                </button>
-              </div>
+      {/* Prompt panel */}
+      {showPrompt && (
+        <div className="card prompt-panel">
+          <div className="prompt-header">
+            <span className="prompt-title">📋 Prompt — pégalo en la skill de cotización</span>
+            <div className="prompt-actions">
+              <button className="btn-copy" onClick={copyPrompt}>{copied?"✓ Copiado!":"📋 Copiar"}</button>
+              <button className="btn-close" onClick={()=>setShowPrompt(false)}>Cerrar</button>
             </div>
           </div>
-
-          {/* Prompt panel */}
-          {showPrompt && (
-            <div className="card prompt-panel">
-              <div className="prompt-header">
-                <span className="prompt-title">📋 Prompt generado — listo para pegar en la skill</span>
-                <div className="prompt-actions">
-                  <button className={`btn-copy${copied ? " copied" : ""}`} onClick={copyPrompt}>
-                    {copied ? "✓ Copiado!" : "📋 Copiar"}
-                  </button>
-                  <button className="btn-close" onClick={() => setShowPrompt(false)}>
-                    Cerrar
-                  </button>
-                </div>
-              </div>
-              <textarea
-                className="prompt-textarea"
-                value={promptText}
-                onChange={e => setPromptText(e.target.value)}
-                spellCheck={false}
-              />
-            </div>
-          )}
-
-          {/* Toast */}
-          {showToast && (
-            <div className="toast">✓ Prompt copiado al portapapeles</div>
-          )}
+          <textarea className="prompt-textarea" value={promptText} onChange={e=>setPromptText(e.target.value)} spellCheck={false}/>
         </div>
-      );
-    }
+      )}
 
-    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
-  </script>
+      {/* Toast */}
+      {toast && <div className={`toast${toast.type==="error"?" error":""}`}>{toast.msg}</div>}
+
+      {/* Config Modal */}
+      {showConfig && (
+        <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setShowConfig(false)}}>
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">⚙️ Conexión con Notion</span>
+              <button className="btn-icon" onClick={()=>setShowConfig(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              <div className="config-info">
+                <strong>Pasos para configurar:</strong><br/>
+                1. Crea una cuenta gratuita en <strong>workers.cloudflare.com</strong><br/>
+                2. Crea un Worker nuevo y pega el código de <code>worker.js</code><br/>
+                3. En Settings → Variables, agrega <code>NOTION_TOKEN</code> con tu token de integración de Notion<br/>
+                4. Copia el URL del Worker (ej: <code>https://shc-cot.tuuser.workers.dev</code>) y pégalo abajo
+              </div>
+              <div className="config-field">
+                <label>URL del Cloudflare Worker</label>
+                <input
+                  value={configUrl}
+                  onChange={e=>setConfigUrl(e.target.value)}
+                  placeholder="https://shc-cotizaciones.tuusuario.workers.dev"
+                />
+                {configTestStatus && (
+                  <div className={`config-status ${configTestStatus==="ok"?"ok":"err"}`}>
+                    {configTestStatus==="ok"
+                      ? "✓ Conexión exitosa — listo para guardar sesiones"
+                      : "✗ No se pudo conectar. Verifica el URL y que NOTION_TOKEN esté configurado."}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" onClick={testConfig} disabled={configTesting||!configUrl}>
+                {configTesting?"Probando…":"🔌 Probar conexión"}
+              </button>
+              <button className="btn-ghost" onClick={()=>setShowConfig(false)}>Cancelar</button>
+              <button className="btn-primary" onClick={saveConfig} disabled={!configUrl}>Guardar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Sessions Modal */}
+      {showSessions && (
+        <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)setShowSessions(false)}}>
+          <div className="modal">
+            <div className="modal-header">
+              <span className="modal-title">📂 Mis Sesiones — Notion</span>
+              <button className="btn-icon" onClick={()=>setShowSessions(false)}>✕</button>
+            </div>
+            <div className="modal-body">
+              {isLoadingSessions ? (
+                <div style={{textAlign:"center",padding:"40px 0",color:"#718096"}}>
+                  <div style={{width:28,height:28,border:"3px solid #e2e8f0",borderTopColor:"#2b6cb0",borderRadius:"50%",animation:"spin 0.7s linear infinite",margin:"0 auto 12px"}}></div>
+                  Cargando desde Notion…
+                </div>
+              ) : sessions.length===0 ? (
+                <div className="sessions-empty">
+                  <div className="icon">📋</div>
+                  <div style={{fontWeight:"bold",marginBottom:6,color:"#4a5568"}}>No hay sesiones guardadas</div>
+                  <div style={{fontSize:12}}>Llena una cotización y usa <strong>"💾 Guardar"</strong> para crear la primera.</div>
+                </div>
+              ) : sessions.map(s=>(
+                <div key={s.id} className="session-card">
+                  <div className="session-card-top">
+                    <span className="session-card-name">{s.nombre}</span>
+                    <span className={`status-chip status-${s.estado}`}>{s.estado}</span>
+                  </div>
+                  <div className="session-card-meta">
+                    {[s.cliente,s.noCOT,s.tipo].filter(Boolean).join(" • ")}
+                    {s.secciones>0 && <span> • <span className="section-badge">{s.secciones} secciones</span></span>}
+                    <span style={{marginLeft:8,color:"#a0aec0"}}>{fmtDate(s.creado)}</span>
+                  </div>
+                  <div className="session-card-bottom">
+                    <div className="session-card-total">
+                      {s.totalGTQ?fmt(s.totalGTQ,"Q"):""}
+                      {s.totalGTQ&&s.totalUSD?" + ":""}
+                      {s.totalUSD?fmt(s.totalUSD,"$"):""}
+                      {!s.totalGTQ&&!s.totalUSD?"Q 0.00":""}
+                    </div>
+                    <div className="session-card-actions">
+                      <select className="status-select" value={s.estado} onChange={e=>updateStatus(s.id,e.target.value)}>
+                        <option>Borrador</option>
+                        <option>Completada</option>
+                        <option>Enviada</option>
+                        <option>Aprobada</option>
+                      </select>
+                      <button className="btn-sm btn-sm-green" onClick={()=>openSession(s)}>Abrir</button>
+                      <button className="btn-sm btn-sm-red" onClick={()=>deleteSession(s.id,s.nombre)}>×</button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="modal-footer">
+              <button className="btn-ghost" onClick={loadSessions}>🔄 Actualizar</button>
+              <button className="btn-primary" onClick={()=>setShowSessions(false)}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
 </body>
 </html>
