@@ -48,6 +48,9 @@
     .moneda-select option { color: #000; background: #fff; }
     .btn-del-section { background: rgba(220,53,69,0.35); border: 1px solid rgba(220,53,69,0.5); color: #fff; cursor: pointer; border-radius: 3px; padding: 2px 8px; font-size: 11px; font-family: Tahoma, Arial, sans-serif; white-space: nowrap; }
     .btn-del-section:hover { background: rgba(220,53,69,0.6); }
+    .btn-move-sec { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: #fff; cursor: pointer; border-radius: 3px; padding: 2px 6px; font-size: 10px; line-height: 1; font-family: Tahoma, Arial, sans-serif; }
+    .btn-move-sec:hover:not(:disabled) { background: rgba(255,255,255,0.3); }
+    .btn-move-sec:disabled { opacity: 0.25; cursor: default; }
 
     .cell-input { border: none; background: transparent; width: 100%; font-family: Tahoma, Arial, sans-serif; font-size: 12px; padding: 4px 6px; color: #2d3748; }
     .cell-input:focus { outline: none; background: #fffde7; }
@@ -58,9 +61,12 @@
     .cell-disc { display: flex; align-items: center; padding: 2px 5px; }
     .cell-subtotal { background: #f7fafc !important; text-align: right; padding: 4px 8px !important; font-weight: 600; color: #2d3748; white-space: nowrap; }
     .cell-subtotal.empty { color: #a0aec0; font-weight: normal; }
-    .cell-del { text-align: center; padding: 2px !important; width: 26px; }
-    .btn-del-row { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 3px; opacity: 0.6; }
+    .cell-del { text-align: center; padding: 2px !important; width: 46px; }
+    .btn-del-row { background: none; border: none; color: #e53e3e; cursor: pointer; font-size: 14px; line-height: 1; padding: 1px 3px; border-radius: 3px; opacity: 0.6; }
     .btn-del-row:hover { opacity: 1; background: #fff5f5; }
+    .btn-move-row { background: none; border: none; color: #a0aec0; cursor: pointer; font-size: 10px; line-height: 1; padding: 1px 3px; border-radius: 2px; display: block; }
+    .btn-move-row:hover:not(:disabled) { background: #edf2f7; color: #2d3748; }
+    .btn-move-row:disabled { opacity: 0.2; cursor: default; }
 
     .add-row-td { padding: 4px 8px !important; background: #fafafa !important; border-top: 1px dashed #e2e8f0 !important; border-bottom: 2px solid #cbd5e0 !important; }
     .btn-add-row { background: none; border: 1px dashed #1a6b3c; color: #1a6b3c; cursor: pointer; border-radius: 3px; padding: 2px 10px; font-size: 11px; font-family: Tahoma, Arial, sans-serif; }
@@ -232,6 +238,30 @@ function App() {
   const addRow     = sid   => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:[...x.filas,makeRow()]}:x)); mark(); };
   const delRow     = (sid,rid) => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:x.filas.filter(f=>f.id!==rid)}:x)); mark(); };
   const updRow     = (sid,rid,k,v) => { setSections(s=>s.map(x=>x.id===sid?{...x,filas:x.filas.map(f=>f.id===rid?{...f,[k]:v}:f)}:x)); mark(); };
+
+  const moveSection = (id, dir) => {
+    setSections(s => {
+      const idx = s.findIndex(x => x.id === id);
+      const ni = dir === 'up' ? idx - 1 : idx + 1;
+      if (ni < 0 || ni >= s.length) return s;
+      const arr = [...s];
+      [arr[idx], arr[ni]] = [arr[ni], arr[idx]];
+      return arr;
+    });
+    mark();
+  };
+  const moveRow = (sid, rid, dir) => {
+    setSections(s => s.map(sec => {
+      if (sec.id !== sid) return sec;
+      const idx = sec.filas.findIndex(f => f.id === rid);
+      const ni = dir === 'up' ? idx - 1 : idx + 1;
+      if (ni < 0 || ni >= sec.filas.length) return sec;
+      const arr = [...sec.filas];
+      [arr[idx], arr[ni]] = [arr[ni], arr[idx]];
+      return { ...sec, filas: arr };
+    }));
+    mark();
+  };
 
   const totalGeneral = () => {
     const t={};
@@ -544,7 +574,7 @@ function App() {
                 <th style={{width:130}}>Precio Unitario</th>
                 <th style={{width:95}}>% Descuento</th>
                 <th style={{width:130}}>Sub-total</th>
-                <th style={{width:28}}></th>
+                <th style={{width:46}}></th>
               </tr>
             </thead>
             <tbody>
@@ -561,11 +591,13 @@ function App() {
                             <option value="Q">Q (GTQ)</option>
                             <option value="$">$ (USD)</option>
                           </select>
+                          <button className="btn-move-sec" onClick={()=>moveSection(sec.id,'up')} disabled={secIdx===0} title="Mover sección arriba">▲</button>
+                          <button className="btn-move-sec" onClick={()=>moveSection(sec.id,'down')} disabled={secIdx===sections.length-1} title="Mover sección abajo">▼</button>
                           <button className="btn-del-section" onClick={()=>delSection(sec.id)}>× Sección</button>
                         </div>
                       </td>
                     </tr>
-                    {sec.filas.map(fila=>{
+                    {sec.filas.map((fila,rowIdx)=>{
                       const sub=calcRowSub(fila);
                       return (
                         <tr key={fila.id}>
@@ -585,7 +617,13 @@ function App() {
                             </div>
                           </td>
                           <td className={`cell-subtotal${sub===0?" empty":""}`}>{sub>0?fmt(sub,sec.moneda):`${sec.moneda} -`}</td>
-                          <td className="cell-del"><button className="btn-del-row" onClick={()=>delRow(sec.id,fila.id)}>×</button></td>
+                          <td className="cell-del">
+                            <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:0}}>
+                              <button className="btn-move-row" onClick={()=>moveRow(sec.id,fila.id,'up')} disabled={rowIdx===0} title="Mover fila arriba">▲</button>
+                              <button className="btn-del-row" onClick={()=>delRow(sec.id,fila.id)} title="Eliminar fila">×</button>
+                              <button className="btn-move-row" onClick={()=>moveRow(sec.id,fila.id,'down')} disabled={rowIdx===sec.filas.length-1} title="Mover fila abajo">▼</button>
+                            </div>
+                          </td>
                         </tr>
                       );
                     })}
